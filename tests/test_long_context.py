@@ -131,7 +131,7 @@ def test_gradio_long_context_uuid_key_value_retrieval(base_model, rope_scaling, 
             device_map='auto',
             rope_scaling=rope_scaling,
         )
-        inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
+        inputs = tokenizer(prompt, return_tensors="pt").to("xpu")
         print(inputs.input_ids.shape)
         gen_out = model.generate(**inputs, max_new_tokens=300)
         response = tokenizer.batch_decode(gen_out)[0]
@@ -509,7 +509,7 @@ summarization task.
 '''
     question = "Question: What's the title of this paper?"  # Something from the beginning
 
-    inputs = tokenizer(prompt + question, return_tensors="pt").to("cuda")
+    inputs = tokenizer(prompt + question, return_tensors="pt").to("xpu")
 
     print(inputs.input_ids.shape)
     assert inputs.input_ids.shape[1] > 6200, "input not long enough"

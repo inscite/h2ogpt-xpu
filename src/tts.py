@@ -264,14 +264,14 @@ def test_bark():
 
     # processor = AutoProcessor.from_pretrained("suno/bark-small")
     processor = AutoProcessor.from_pretrained(bark_model)
-    model = AutoModel.from_pretrained(bark_model).to("cuda")
+    model = AutoModel.from_pretrained(bark_model).to("xpu")
 
     inputs = processor(
         text=[
             "Hello, my name is Suno. And, uh — and I like pizza. [laughs] But I also have other interests such as playing tic tac toe."],
         return_tensors="pt",
     )
-    inputs = inputs.to("cuda")
+    inputs = inputs.to("xpu")
     t0 = time.time()
     speech_values = model.generate(**inputs, do_sample=True)
     print("Duration: %s" % (time.time() - t0), flush=True)

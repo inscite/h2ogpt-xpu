@@ -71,12 +71,12 @@ class H2OImageCaptionLoader(ImageCaptionLoader):
         self.set_context()
 
     def set_context(self):
-        if get_device() == 'cuda' and self.caption_gpu:
+        if get_device() == 'xpu' and self.caption_gpu:
             import torch
-            n_gpus = torch.cuda.device_count() if torch.cuda.is_available() else 0
+            n_gpus = torch.xpu.device_count() if torch.xpu.is_available() else 0
             if n_gpus > 0:
                 self.context_class = torch.device
-                self.device = 'cuda'
+                self.device = 'xpu'
             else:
                 self.device = 'cpu'
         else:
@@ -87,7 +87,7 @@ class H2OImageCaptionLoader(ImageCaptionLoader):
                 # device_map = 'auto'
                 self.device_map = {"": 0}
             else:
-                if self.device == 'cuda':
+                if self.device == 'xpu':
                     self.device_map = {"": 'cuda:%d' % self.gpu_id}
                 else:
                     self.device_map = {"": 'cpu'}

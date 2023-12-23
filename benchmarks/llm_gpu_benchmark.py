@@ -26,7 +26,7 @@ del data
 # %%
 # Process the dataframe
 # Drop columns that are not needed
-df.drop(columns=['task', 'ngpus', 'reps', 'date', 'git_sha', 'transformers', 'bitsandbytes', 'cuda', 'hostname',
+df.drop(columns=['task', 'ngpus', 'reps', 'date', 'git_sha', 'transformers', 'bitsandbytes', 'xpu', 'hostname',
                  'summarize_input_len_bytes'], inplace=True)
 # Rename columns
 df.rename(columns={'n_gpus': 'gpu_count'}, inplace=True)

@@ -96,7 +96,7 @@ from chromamig import ChromaMig
 
 def get_context_cast():
     # chroma not autocasting right internally
-    # return torch.autocast('cuda') if torch.cuda.is_available() else NullContext()
+    # return torch.autocast('xpu') if torch.xpu.is_available() else NullContext()
     return NullContext()
 
 
@@ -462,8 +462,8 @@ def get_embedding(use_openai_embedding, hf_embedding_model=None, preload=False, 
                 isinstance(gpu_id, int) and \
                 gpu_id >= 0 and \
                 hasattr(embedding.client, 'to') and \
-                get_device() == 'cuda':
-            embedding.client = embedding.client.to('cuda:%d' % gpu_id)
+                get_device() == 'xpu':
+            embedding.client = embedding.client.to('xpu:%d' % gpu_id)
         embedding.client.preload = preload
     return embedding
 
@@ -2005,14 +2005,15 @@ def get_llm(use_openai_model=False,
 
 
 def get_device_dtype():
-    # torch.device("cuda") leads to cuda:x cuda:y mismatches for multi-GPU consistently
+    # torch.device("xpu") leads to cuda:x cuda:y mismatches for multi-GPU consistently
     import torch
-    n_gpus = torch.cuda.device_count() if torch.cuda.is_available() else 0
-    device = 'cpu' if n_gpus == 0 else 'cuda'
+    import intel_extension_for_pytorch as ipex
+    n_gpus = torch.xpu.device_count() if torch.xpu.is_available() else 0
+    device = 'cpu' if n_gpus == 0 else 'xpu'
     # from utils import NullContext
     # context_class = NullContext if n_gpus > 1 or n_gpus == 0 else context_class
     context_class = torch.device
-    torch_dtype = torch.float16 if device == 'cuda' else torch.float32
+    torch_dtype = torch.float16 if device == 'xpu' else torch.float32
     return device, torch_dtype, context_class
 
 
@@ -3542,11 +3543,11 @@ def path_to_docs(path_or_paths,
     # could use generator, but messes up metadata handling in recursive case
     # FIXME: n_gpus=n_gpus?
     if caption_loader and not isinstance(caption_loader, (bool, str)) and caption_loader.device != 'cpu' or \
-            get_device() == 'cuda' or \
+            get_device() == 'xpu' or \
             asr_loader and not isinstance(asr_loader, (bool, str)) and asr_loader.pipe.device != 'cpu' or \
-            get_device() == 'cuda':
+            get_device() == 'xpu':
         # to avoid deadlocks, presume was preloaded and so can't fork due to cuda context
-        # get_device() == 'cuda' because presume faster to process image from (temporarily) preloaded model
+        # get_device() == 'xpu' because presume faster to process image from (temporarily) preloaded model
         n_jobs_image = 1
     else:
         n_jobs_image = n_jobs

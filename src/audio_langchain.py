@@ -146,10 +146,10 @@ class OpenAIWhisperParserLocal(BaseBlobParser):
                 # unless overridden, use the small base model on cpu
                 self.lang_model = "openai/whisper-base"
         else:
-            if torch.cuda.is_available():
-                self.device = "cuda"
+            if torch.xpu.is_available():
+                self.device = "xpu"
                 # check GPU memory and select automatically the model
-                mem = torch.cuda.get_device_properties(self.device).total_memory / (
+                mem = torch.xpu.get_device_properties(self.device).total_memory / (
                         1024 ** 2
                 )
                 if mem < 5000:
@@ -176,7 +176,7 @@ class OpenAIWhisperParserLocal(BaseBlobParser):
         if self.device == 'cpu':
             device_map = {"", 'cpu'}
         else:
-            device_map = {"": 'cuda:%d' % device_id} if device_id >= 0 else {'': 'cuda'}
+            device_map = {"": 'cuda:%d' % device_id} if device_id >= 0 else {'': 'xpu'}
 
         # https://huggingface.co/blog/asr-chunking
         self.pipe = pipeline(
@@ -209,7 +209,7 @@ class OpenAIWhisperParserLocal(BaseBlobParser):
             # Run on GPU with FP16
             model = WhisperModel(model_size, device=self.device, compute_type="float16")
             # or run on GPU with INT8
-            # model = WhisperModel(model_size, device="cuda", compute_type="int8_float16")
+            # model = WhisperModel(model_size, device="xpu", compute_type="int8_float16")
             # or run on CPU with INT8
             # model = WhisperModel(model_size, device="cpu", compute_type="int8")
             self.pipe.model = model
@@ -320,17 +320,17 @@ class H2OAudioCaptionLoader(ImageCaptionLoader):
         self.files_out = []
 
     def set_context(self):
-        if get_device() == 'cuda' and self.asr_gpu:
+        if get_device() == 'xpu' and self.asr_gpu:
             import torch
-            n_gpus = torch.cuda.device_count() if torch.cuda.is_available() else 0
+            n_gpus = torch.xpu.device_count() if torch.xpu.is_available() else 0
             if n_gpus > 0:
                 self.context_class = torch.device
-                self.device = 'cuda'
+                self.device = 'xpu'
             else:
                 self.device = 'cpu'
         else:
             self.device = 'cpu'
-        if get_device() == 'cuda' and self.asr_gpu:
+        if get_device() == 'xpu' and self.asr_gpu:
             if self.gpu_id == 'auto':
                 # blip2 has issues with multi-GPU.  Error says need to somehow set language model in device map
                 # device_map = 'auto'

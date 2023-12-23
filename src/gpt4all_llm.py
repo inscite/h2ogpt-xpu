@@ -39,7 +39,7 @@ def get_model_tokenizer_gpt4all(base_model, n_jobs=None, gpu_id=None, n_gpus=Non
         os.environ['CUDA_VISIBLE_DEVICES'] = cvd
     else:
         os.environ.pop('CUDA_VISIBLE_DEVICES', None)
-    return model, tokenizer, 'cpu' if n_gpus != 0 else 'cuda'
+    return model, tokenizer, 'cpu' if n_gpus != 0 else 'xpu'
 
 
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler

@@ -1084,7 +1084,7 @@ def add_deberta_grade(df):
     reward_name = "OpenAssistant/reward-model-deberta-v3-large-v2"
     rank_model, tokenizer = AutoModelForSequenceClassification.from_pretrained(
         reward_name), AutoTokenizer.from_pretrained(reward_name)
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    device = 'xpu' if torch.xpu.is_available() else 'cpu'
     rank_model.to(device)
 
     def get_question(x):
@@ -1108,7 +1108,7 @@ def add_deberta_grade(df):
     pipe = pipeline(
         "text-classification",
         model=reward_name,
-        device="cuda:0" if torch.cuda.is_available() else "cpu"
+        device="cuda:0" if torch.xpu.is_available() else "cpu"
     )
     start = 0
     batch_size = 64 * 16
@@ -1134,7 +1134,7 @@ def add_deberta_grade(df):
                     pipe(KeyPairDataset(dataset, "question", "answer"), batch_size=micro_batch)
                 )
             ])
-        except torch.cuda.OutOfMemoryError:
+        except torch.xpu.OutOfMemoryError:
             last_oom = start
             micro_batch = max(1, micro_batch // 2)
             print("OOM - retrying with micro_batch=%d" % micro_batch)

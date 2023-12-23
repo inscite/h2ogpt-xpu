@@ -86,11 +86,11 @@ class MemTracker(object):
         return np.sum(sizes) / 1024 ** 2
 
     def get_allocate_usage(self):
-        return torch.cuda.memory_allocated() / 1024 ** 2
+        return torch.xpu.memory_allocated() / 1024 ** 2
 
     def clear_cache(self):
         gc.collect()
-        torch.cuda.empty_cache()
+        torch.xpu.empty_cache()
 
     def print_all_gpu_tensor(self, file=None):
         for x in self.get_tensors():

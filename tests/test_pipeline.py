@@ -19,9 +19,9 @@ def test_export_copy():
     model_name = 'h2oai/h2ogpt-oig-oasst1-512-6_9b'
     load_in_8bit = True
     import torch
-    n_gpus = torch.cuda.device_count() if torch.cuda.is_available() else 0
-    device = 'cpu' if n_gpus == 0 else 'cuda'
-    device_map = {"": 0} if device == 'cuda' else "auto"
+    n_gpus = torch.xpu.device_count() if torch.xpu.is_available() else 0
+    device = 'cpu' if n_gpus == 0 else 'xpu'
+    device_map = {"": 0} if device == 'xpu' else "auto"
 
     from transformers import AutoTokenizer, AutoModelForCausalLM
     model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.bfloat16, device_map=device_map,

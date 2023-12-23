@@ -24,12 +24,12 @@ class H2OPix2StructLoader(ImageCaptionLoader):
         self._max_new_tokens = max_new_tokens
 
     def set_context(self):
-        if get_device() == 'cuda':
+        if get_device() == 'xpu':
             import torch
-            n_gpus = torch.cuda.device_count() if torch.cuda.is_available() else 0
+            n_gpus = torch.xpu.device_count() if torch.xpu.is_available() else 0
             if n_gpus > 0:
                 self.context_class = torch.device
-                self.device = 'cuda'
+                self.device = 'xpu'
             else:
                 self.device = 'cpu'
         else:

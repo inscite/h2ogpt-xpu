@@ -173,7 +173,7 @@ def run_eval1(cpu=False, bits=None, base_model='h2oai/h2ogpt-oig-oasst1-512-6_9b
     actual2 = {k: v for k, v in zip(columns, result_list) if k in key_separate}
 
     import torch
-    if torch.cuda.is_available():
+    if torch.xpu.is_available():
         if bits == 4:
             expected2 = {
                 'response': """The spinal ligaments are the thick bands of tissue that connect the vertebrae of the spine. They are there to keep the vertebrae in place and to protect the spinal cord.""",

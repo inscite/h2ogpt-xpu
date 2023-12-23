@@ -331,7 +331,7 @@ def predict(model, text, tokenizer=None,
             seed=1234, topk=100,
             temperature=0.9, 
             sft=True, convo_template = "",
-            device = "cuda",
+            device = "xpu",
             model_name="AquilaChat2-7B",
             history=[],
             **kwargs):

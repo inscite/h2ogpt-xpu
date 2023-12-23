@@ -60,7 +60,7 @@ def test_perf_benchmarks(backend, base_model, task, bits, ngpus):
     import socket
     os.environ['CUDA_VISIBLE_DEVICES'] = "" if ngpus == 0 else "0" if ngpus == 1 else ",".join([str(x) for x in range(ngpus)])
     import torch
-    n_gpus = torch.cuda.device_count()
+    n_gpus = torch.xpu.device_count()
     if n_gpus != ngpus:
         return
     git_sha = (
@@ -74,9 +74,9 @@ def test_perf_benchmarks(backend, base_model, task, bits, ngpus):
     from importlib.metadata import version
     bench_dict["transformers"] = str(version('transformers'))
     bench_dict["bitsandbytes"] = str(version('bitsandbytes'))
-    bench_dict["cuda"] = str(torch.version.cuda)
+    bench_dict["xpu"] = str(torch.version.cuda)
     bench_dict["hostname"] = str(socket.gethostname())
-    gpu_list = [torch.cuda.get_device_name(i) for i in range(n_gpus)]
+    gpu_list = [torch.xpu.get_device_name(i) for i in range(n_gpus)]
 
     # get GPU memory, assumes homogeneous system
     cmd = 'nvidia-smi -i 0 -q | grep -A 1 "FB Memory Usage" | cut -d: -f2 | tail -n 1'

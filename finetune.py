@@ -123,7 +123,7 @@ def train(
     print(f"local_rank: {local_rank}")
     print(f"global rank: {rank}")
 
-    gpus = max(world_size, torch.cuda.device_count())
+    gpus = max(world_size, torch.xpu.device_count())
     run_id = run_id or 0
     if not data_path:
         raise ValueError("No data_path provided")
@@ -177,7 +177,7 @@ def train(
             device_map = {"": int(os.environ.get("LOCAL_RANK") or 0)}
             gradient_accumulation_steps = gradient_accumulation_steps // world_size
         else:
-            free_in_GB = int(min(torch.cuda.mem_get_info()) / 1024 ** 3)
+            free_in_GB = int(min(torch.xpu.mem_get_info()) / 1024 ** 3)
             max_memory = f"{free_in_GB - 2}GB"
             max_memory = {i: max_memory for i in range(gpus)}
             log("world_size: %d" % world_size)
@@ -404,11 +404,11 @@ def train(
         train_data = concatenate_datasets([train_data, train_data_mix_in])
     log("Tokenizing %s training rows" % train_data.num_rows)
     train_data = train_data.shuffle().map(generate_and_tokenize_prompt_fun,
-                                          num_proc=os.cpu_count() // torch.cuda.device_count())
+                                          num_proc=os.cpu_count() // torch.xpu.device_count())
     if drop_truncations:
         log("avoid keeping truncated cases to avoid contaminating model with truncation cases.  Original size: %s" % train_data.num_rows)
         prune_long_sequences_func = partial(prune_long_sequences, cutoff_len=cutoff_len)
-        train_data = train_data.filter(prune_long_sequences_func, num_proc=os.cpu_count() // torch.cuda.device_count())
+        train_data = train_data.filter(prune_long_sequences_func, num_proc=os.cpu_count() // torch.xpu.device_count())
         log("avoid keeping truncated cases to avoid contaminating model with truncation cases.  New size: %s" % train_data.num_rows)
     train_set_size = len(train_data)
 
@@ -420,7 +420,7 @@ def train(
     if valid_data:
         log("Tokenizing %s validation rows" % valid_data.num_rows)
         valid_data = valid_data.shuffle().map(generate_and_tokenize_prompt_fun,
-                                              num_proc=os.cpu_count() // torch.cuda.device_count())
+                                              num_proc=os.cpu_count() // torch.xpu.device_count())
         val_set_size = len(valid_data)
     else:
         val_set_size = 0

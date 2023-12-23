@@ -9,7 +9,7 @@ def get_transcriber(model="openai/whisper-base.en", use_gpu=True, gpu_id='auto')
     if device == 'cpu' or not use_gpu:
         device_map = 'auto'  # {"", 'cpu'}
     else:
-        device_map = {"": gpu_id} if gpu_id >= 0 else {'': 'cuda'}
+        device_map = {"": gpu_id} if gpu_id >= 0 else {'': 'xpu'}
 
     from transformers import pipeline
     transcriber = pipeline("automatic-speech-recognition", model=model, device_map=device_map)

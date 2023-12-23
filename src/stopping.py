@@ -6,7 +6,7 @@ from enums import PromptType, t5_type
 
 class StoppingCriteriaSub(StoppingCriteria):
 
-    def __init__(self, stops=[], stop_words=[], encounters=[], device="cuda", model_max_length=None, tokenizer=None,
+    def __init__(self, stops=[], stop_words=[], encounters=[], device="xpu", model_max_length=None, tokenizer=None,
                  truncation_generation=False):
         super().__init__()
         assert len(stops) % len(encounters) == 0, "Number of stops and encounters must match"

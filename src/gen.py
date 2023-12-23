@@ -1400,7 +1400,7 @@ def main(
         elif clear_torch_cache_level == 1:
             os.environ['CLEAR_CLEAR_TORCH'] = '1'
 
-    n_gpus1 = torch.cuda.device_count() if torch.cuda.is_available() else 0
+    n_gpus1 = torch.xpu.device_count() if torch.xpu.is_available() else 0
     n_gpus1, gpu_ids = cuda_vis_check(n_gpus1)
     if n_gpus is None:
         n_gpus = n_gpus1
@@ -1428,7 +1428,7 @@ def main(
         load_awq = ''
         load_exllama = False
         use_gpu_id = False
-        if get_device(n_gpus=n_gpus) == "cuda":
+        if get_device(n_gpus=n_gpus) == "xpu":
             torch.backends.cudnn.benchmark = True
             torch.backends.cudnn.enabled = False
             torch.set_default_dtype(torch.float32)
@@ -2128,7 +2128,7 @@ def get_non_lora_model(base_model, model_loader, load_half,
     else:
         device_map = "auto"
 
-    n_gpus = torch.cuda.device_count() if torch.cuda.is_available() else 0
+    n_gpus = torch.xpu.device_count() if torch.xpu.is_available() else 0
     n_gpus, gpu_ids = cuda_vis_check(n_gpus)
 
     if n_gpus > 0:
@@ -2140,7 +2140,7 @@ def get_non_lora_model(base_model, model_loader, load_half,
             else:
                 device_map = {'': min(n_gpus - 1, gpu_id)}
         if gpu_id == -1:
-            device_map = {'': 'cuda'}
+            device_map = {'': 'xpu'}
     else:
         device_map = {'': 'cpu'}
         model_kwargs['load_in_8bit'] = False
@@ -2620,7 +2620,7 @@ def get_model(
                                                                llamacpp_path=llamacpp_path)
         return model, tokenizer, device
     if load_exllama:
-        return model_loader, tokenizer, 'cuda' if n_gpus != 0 else 'cpu'
+        return model_loader, tokenizer, 'xpu' if n_gpus != 0 else 'cpu'
 
     # get local torch-HF model
     return get_hf_model(load_8bit=load_8bit,
@@ -2741,12 +2741,12 @@ def get_hf_model(load_8bit: bool = False,
         # already a pipeline, tokenizer_loader is string for task
         model = model_loader(tokenizer,
                              model=base_model,
-                             device=0 if device == "cuda" else -1,
-                             torch_dtype=torch.float16 if device == 'cuda' else torch.float32)
+                             device=0 if device == "xpu" else -1,
+                             torch_dtype=torch.float16 if device == 'xpu' else torch.float32)
     else:
-        assert device in ["cuda", "cpu", "mps"], "Unsupported device %s" % device
+        assert device in ["xpu", "cpu", "mps"], "Unsupported device %s" % device
         model_kwargs = dict(local_files_only=local_files_only,
-                            torch_dtype=torch.float16 if device == 'cuda' else torch.float32,
+                            torch_dtype=torch.float16 if device == 'xpu' else torch.float32,
                             resume_download=resume_download,
                             token=use_auth_token,
                             trust_remote_code=trust_remote_code,
@@ -2755,7 +2755,7 @@ def get_hf_model(load_8bit: bool = False,
                             # rope_scaling=rope_scaling,  # only put into config
                             )
         if 'mbart-' not in base_model.lower() and 'mpt-' not in base_model.lower():
-            if use_gpu_id and gpu_id is not None and gpu_id >= 0 and device == 'cuda':
+            if use_gpu_id and gpu_id is not None and gpu_id >= 0 and device == 'xpu':
                 device_map = {"": gpu_id}
             else:
                 device_map = "auto"
@@ -2766,15 +2766,15 @@ def get_hf_model(load_8bit: bool = False,
                                      ))
         if 'mpt-' in base_model.lower() and gpu_id is not None and gpu_id >= 0:
             # MPT doesn't support spreading over GPUs
-            model_kwargs.update(dict(device_map={"": gpu_id} if device == 'cuda' else "cpu"))
+            model_kwargs.update(dict(device_map={"": gpu_id} if device == 'xpu' else "cpu"))
 
         if 'OpenAssistant/reward-model'.lower() in base_model.lower():
             # FIXME: could put on other GPUs
-            model_kwargs['device_map'] = {"": 0} if device == 'cuda' else {"": 'cpu'}
+            model_kwargs['device_map'] = {"": 0} if device == 'xpu' else {"": 'cpu'}
             model_kwargs.pop('torch_dtype', None)
         pop_unused_model_kwargs(model_kwargs)
 
-        n_gpus = torch.cuda.device_count() if torch.cuda.is_available() else 0
+        n_gpus = torch.xpu.device_count() if torch.xpu.is_available() else 0
         n_gpus, gpu_ids = cuda_vis_check(n_gpus)
         if n_gpus != 0 and not load_gptq:
             if low_bit_mode == 1:
@@ -2874,7 +2874,7 @@ def get_hf_model(load_8bit: bool = False,
             model = PeftModel.from_pretrained(
                 model,
                 lora_weights,
-                torch_dtype=torch.float16 if device == 'cuda' else torch.float32,
+                torch_dtype=torch.float16 if device == 'xpu' else torch.float32,
                 local_files_only=local_files_only,
                 resume_download=resume_download,
                 token=use_auth_token,
@@ -2882,7 +2882,7 @@ def get_hf_model(load_8bit: bool = False,
                 offload_folder=offload_folder,
                 rope_scaling=rope_scaling,
                 revision=revision,
-                device_map={"": 0} if device == 'cuda' else {"": 'cpu'},  # seems to be required
+                device_map={"": 0} if device == 'xpu' else {"": 'cpu'},  # seems to be required
             )
         else:
             with torch.device(device):
@@ -2896,7 +2896,7 @@ def get_hf_model(load_8bit: bool = False,
                 model = PeftModel.from_pretrained(
                     model,
                     lora_weights,
-                    torch_dtype=torch.float16 if device == 'cuda' else torch.float32,
+                    torch_dtype=torch.float16 if device == 'xpu' else torch.float32,
                     local_files_only=local_files_only,
                     resume_download=resume_download,
                     token=use_auth_token,
@@ -4481,7 +4481,7 @@ class H2OTextIteratorStreamer(TextIteratorStreamer):
 def generate_with_exceptions(func, *args, raise_generate_gpu_exceptions=True, **kwargs):
     try:
         func(*args, **kwargs)
-    except torch.cuda.OutOfMemoryError as e:
+    except torch.xpu.OutOfMemoryError as e:
         print("GPU OOM 2: exception: %s" % str(e),
               flush=True)
         if 'input_ids' in kwargs:
@@ -4805,7 +4805,7 @@ def score_qa(smodel, stokenizer, max_length_tokenize, question, answer, cutoff_l
                         max_length=max_length_tokenize).to(smodel.device)
     try:
         score = torch.sigmoid(smodel(**inputs.to(smodel.device)).logits[0].float()).cpu().detach().numpy()[0]
-    except torch.cuda.OutOfMemoryError as e:
+    except torch.xpu.OutOfMemoryError as e:
         print("GPU OOM 3: question: %s answer: %s exception: %s" % (question, answer, str(e)), flush=True)
         del inputs
         traceback.print_exc()

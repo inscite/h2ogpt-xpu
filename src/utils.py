@@ -75,7 +75,7 @@ def set_seed(seed: int):
     random_state = np.random.RandomState(seed)
     random.seed(seed)
     torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
+    torch.xpu.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     os.environ['PYTHONHASHSEED'] = str(seed)
@@ -98,9 +98,9 @@ def clear_torch_cache(allow_skip=False):
         return
     try:
         import torch
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-            torch.cuda.ipc_collect()
+        if torch.xpu.is_available():
+            torch.xpu.empty_cache()
+            #torch.xpu.ipc_collect()
             gc.collect()
     except RuntimeError as e:
         print("clear_torch_cache error: %s" % ''.join(traceback.format_tb(e.__traceback__)), flush=True)
@@ -129,19 +129,20 @@ def ping_gpu():
 def ping_gpu_memory():
     from models.gpu_mem_track import MemTracker
     gpu_tracker = MemTracker()  # define a GPU tracker
-    from torch.cuda import memory_summary
+    from torch.xpu import memory_summary
     gpu_tracker.track()
 
 
 def get_torch_allocated():
     import torch
-    return torch.cuda.memory_allocated()
+    return torch.xpu.memory_allocated()
 
 
 def get_device(n_gpus=None):
     import torch
-    if torch.cuda.is_available() and n_gpus != 0:
-        device = "cuda"
+    import intel_extension_for_pytorch as ipex
+    if torch.xpu.is_available() and n_gpus != 0:
+        device = "xpu"
     elif torch.backends.mps.is_built():
         device = "mps"
     else:
@@ -782,8 +783,8 @@ def get_ngpus_vis(raise_if_exception=True):
 
     if ngpus_vis1 is None:
         import torch
-        if get_device() == 'cuda':
-            ngpus_vis1 = torch.cuda.device_count() if torch.cuda.is_available() else 0
+        if get_device() == 'xpu':
+            ngpus_vis1 = torch.xpu.device_count() if torch.xpu.is_available() else 0
         else:
             ngpus_vis1 = 0
 
@@ -1537,7 +1538,7 @@ def lg_to_gr(
 ):
     # translate:
     import torch
-    n_gpus = torch.cuda.device_count() if torch.cuda.is_available() else 0
+    n_gpus = torch.xpu.device_count() if torch.xpu.is_available() else 0
     n_gpus, _ = cuda_vis_check(n_gpus)
 
     image_audio_loaders_options = ['Caption']

@@ -69,7 +69,7 @@ class RotaryEmbedding(torch.nn.Module):
     def cos_sin(
         self,
         seq_len: int,
-        device="cuda",
+        device="xpu",
         dtype=torch.bfloat16,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         if not self.use_cache:
